@@ -1,337 +1,840 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TYAM — Trade Flow (หนูเข้าใจแบบนี้นะคะ)</title>
-<style>
-  :root {
-    --l1: #6d28d9;   /* supplier  - ม่วง */
-    --l1bg: #f5f3ff;
-    --l2: #0e7490;   /* dealer    - ฟ้าเขียว */
-    --l2bg: #ecfeff;
-    --l3: #be123c;   /* influencer- แดงชมพู */
-    --l3bg: #fff1f2;
-    --cust: #047857; /* customer  - เขียว */
-    --custbg: #ecfdf5;
-    --ink: #1e293b;
-    --muted: #64748b;
-    --line: #cbd5e1;
-    --ok: #16a34a;
-    --warn: #d97706;
-    --bad: #dc2626;
-    --card: #ffffff;
-    --bg: #f8fafc;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--ink);
-    font-family: "Inter", "Sukhumvit Set", "IBM Plex Sans Thai", -apple-system, "Segoe UI", sans-serif;
-    line-height: 1.55; padding: 0 0 80px;
-  }
-  header {
-    background: linear-gradient(120deg, #312e81 0%, #6d28d9 45%, #be123c 100%);
-    color: #fff; padding: 34px 32px 30px;
-  }
-  header h1 { margin: 0 0 6px; font-size: 26px; letter-spacing: -.01em; }
-  header p { margin: 0; opacity: .92; font-size: 14.5px; max-width: 880px; }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
-  .section-title {
-    font-size: 18px; font-weight: 700; margin: 38px 0 14px;
-    display: flex; align-items: center; gap: 10px;
-  }
-  .section-title .num {
-    background: var(--ink); color: #fff; width: 26px; height: 26px; border-radius: 7px;
-    display: inline-grid; place-items: center; font-size: 14px;
-  }
-  .lead { color: var(--muted); font-size: 14px; margin: -6px 0 18px; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TYAM — Trade Flow (หนูเข้าใจแบบนี้นะคะ)</title>
+    <style>
+      :root {
+        --l1: #6d28d9; /* supplier  - ม่วง */
+        --l1bg: #f5f3ff;
+        --l2: #0e7490; /* dealer    - ฟ้าเขียว */
+        --l2bg: #ecfeff;
+        --l3: #be123c; /* influencer- แดงชมพู */
+        --l3bg: #fff1f2;
+        --cust: #047857; /* customer  - เขียว */
+        --custbg: #ecfdf5;
+        --ink: #1e293b;
+        --muted: #64748b;
+        --line: #cbd5e1;
+        --ok: #16a34a;
+        --warn: #d97706;
+        --bad: #dc2626;
+        --card: #ffffff;
+        --bg: #f8fafc;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          "Inter",
+          "Sukhumvit Set",
+          "IBM Plex Sans Thai",
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.55;
+        padding: 0 0 80px;
+      }
+      header {
+        background: linear-gradient(
+          120deg,
+          #312e81 0%,
+          #6d28d9 45%,
+          #be123c 100%
+        );
+        color: #fff;
+        padding: 34px 32px 30px;
+      }
+      header h1 {
+        margin: 0 0 6px;
+        font-size: 26px;
+        letter-spacing: -0.01em;
+      }
+      header p {
+        margin: 0;
+        opacity: 0.92;
+        font-size: 14.5px;
+        max-width: 880px;
+      }
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+      .section-title {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 38px 0 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .section-title .num {
+        background: var(--ink);
+        color: #fff;
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+        display: inline-grid;
+        place-items: center;
+        font-size: 14px;
+      }
+      .lead {
+        color: var(--muted);
+        font-size: 14px;
+        margin: -6px 0 18px;
+      }
 
-  /* ---------- Layer stack ---------- */
-  .stack { display: grid; gap: 0; position: relative; }
-  .layer {
-    background: var(--card); border: 2px solid var(--line); border-radius: 16px;
-    padding: 18px 20px; margin: 0 0 6px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,.05);
-  }
-  .layer.l1 { border-color: var(--l1); background: var(--l1bg); }
-  .layer.l2 { border-color: var(--l2); background: var(--l2bg); }
-  .layer.l3 { border-color: var(--l3); background: var(--l3bg); }
-  .layer.cust { border-color: var(--cust); background: var(--custbg); }
-  .layer-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
-  .badge {
-    font-weight: 800; font-size: 13px; color:#fff; padding: 4px 11px; border-radius: 999px; white-space: nowrap;
-  }
-  .l1 .badge { background: var(--l1); }
-  .l2 .badge { background: var(--l2); }
-  .l3 .badge { background: var(--l3); }
-  .cust .badge { background: var(--cust); }
-  .layer-title { font-size: 16px; font-weight: 700; }
-  .layer-sub { font-size: 13px; color: var(--muted); }
-  .duties { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 22px; margin: 6px 0 0; }
-  @media (max-width: 720px){ .duties { grid-template-columns: 1fr; } }
-  .duties li { font-size: 13.5px; margin: 2px 0; list-style: none; padding-left: 20px; position: relative; }
-  .duties li::before { content: "›"; position:absolute; left: 4px; color: var(--muted); font-weight: 700; }
-  .duties li.can::before { content: "✓"; color: var(--ok); }
-  .duties li.cant::before { content: "✕"; color: var(--bad); }
-  ul.duties { padding: 0; margin: 8px 0 0; }
+      /* ---------- Layer stack ---------- */
+      .stack {
+        display: grid;
+        gap: 0;
+        position: relative;
+      }
+      .layer {
+        background: var(--card);
+        border: 2px solid var(--line);
+        border-radius: 16px;
+        padding: 18px 20px;
+        margin: 0 0 6px;
+        position: relative;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+      .layer.l1 {
+        border-color: var(--l1);
+        background: var(--l1bg);
+      }
+      .layer.l2 {
+        border-color: var(--l2);
+        background: var(--l2bg);
+      }
+      .layer.l3 {
+        border-color: var(--l3);
+        background: var(--l3bg);
+      }
+      .layer.cust {
+        border-color: var(--cust);
+        background: var(--custbg);
+      }
+      .layer-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+      }
+      .badge {
+        font-weight: 800;
+        font-size: 13px;
+        color: #fff;
+        padding: 4px 11px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+      .l1 .badge {
+        background: var(--l1);
+      }
+      .l2 .badge {
+        background: var(--l2);
+      }
+      .l3 .badge {
+        background: var(--l3);
+      }
+      .cust .badge {
+        background: var(--cust);
+      }
+      .layer-title {
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .layer-sub {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .duties {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px 22px;
+        margin: 6px 0 0;
+      }
+      @media (max-width: 720px) {
+        .duties {
+          grid-template-columns: 1fr;
+        }
+      }
+      .duties li {
+        font-size: 13.5px;
+        margin: 2px 0;
+        list-style: none;
+        padding-left: 20px;
+        position: relative;
+      }
+      .duties li::before {
+        content: "›";
+        position: absolute;
+        left: 4px;
+        color: var(--muted);
+        font-weight: 700;
+      }
+      .duties li.can::before {
+        content: "✓";
+        color: var(--ok);
+      }
+      .duties li.cant::before {
+        content: "✕";
+        color: var(--bad);
+      }
+      ul.duties {
+        padding: 0;
+        margin: 8px 0 0;
+      }
 
-  .flowarrow {
-    text-align: center; color: var(--muted); font-size: 12.5px; margin: 2px 0; font-weight: 600;
-  }
-  .flowarrow b { color: var(--ink); }
+      .flowarrow {
+        text-align: center;
+        color: var(--muted);
+        font-size: 12.5px;
+        margin: 2px 0;
+        font-weight: 600;
+      }
+      .flowarrow b {
+        color: var(--ink);
+      }
 
-  /* ---------- two-direction legend ---------- */
-  .arrows-legend { display:flex; gap: 24px; flex-wrap: wrap; margin: 8px 0 4px; }
-  .arrows-legend div { font-size: 13px; display:flex; align-items:center; gap:8px; }
-  .pill { display:inline-block; width: 34px; height: 0; border-top: 3px solid; border-radius: 2px; }
-  .pill.ref { border-color: var(--l1); }
-  .pill.see { border-color: var(--l3); border-top-style: dashed; }
+      /* ---------- two-direction legend ---------- */
+      .arrows-legend {
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+        margin: 8px 0 4px;
+      }
+      .arrows-legend div {
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .pill {
+        display: inline-block;
+        width: 34px;
+        height: 0;
+        border-top: 3px solid;
+        border-radius: 2px;
+      }
+      .pill.ref {
+        border-color: var(--l1);
+      }
+      .pill.see {
+        border-color: var(--l3);
+        border-top-style: dashed;
+      }
 
-  /* ---------- multi-role + aggregation ---------- */
-  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 860px){ .cols { grid-template-columns: 1fr; } }
-  .card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px;
-  }
-  .card h3 { margin: 0 0 8px; font-size: 15px; }
-  .card p { margin: 0 0 8px; font-size: 13.5px; color: #334155; }
-  .mini { font-size: 12.5px; color: var(--muted); }
-  .tag {
-    display:inline-block; font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 6px;
-    background:#eef2ff; color:#4338ca; margin-right:6px;
-  }
+      /* ---------- multi-role + aggregation ---------- */
+      .cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      @media (max-width: 860px) {
+        .cols {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px 18px;
+      }
+      .card h3 {
+        margin: 0 0 8px;
+        font-size: 15px;
+      }
+      .card p {
+        margin: 0 0 8px;
+        font-size: 13.5px;
+        color: #334155;
+      }
+      .mini {
+        font-size: 12.5px;
+        color: var(--muted);
+      }
+      .tag {
+        display: inline-block;
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 6px;
+        background: #eef2ff;
+        color: #4338ca;
+        margin-right: 6px;
+      }
 
-  /* example boxes for multi-role */
-  .scenario { border-left: 4px solid var(--l2); padding: 8px 12px; background:#fff; border-radius: 8px; margin: 8px 0; font-size: 13px; }
-  .scenario b { color: var(--l2); }
-  .scenario.alt { border-left-color: var(--l3); }
-  .scenario.alt b { color: var(--l3); }
+      /* example boxes for multi-role */
+      .scenario {
+        border-left: 4px solid var(--l2);
+        padding: 8px 12px;
+        background: #fff;
+        border-radius: 8px;
+        margin: 8px 0;
+        font-size: 13px;
+      }
+      .scenario b {
+        color: var(--l2);
+      }
+      .scenario.alt {
+        border-left-color: var(--l3);
+      }
+      .scenario.alt b {
+        color: var(--l3);
+      }
 
-  /* ---------- alignment table ---------- */
-  table.align { width: 100%; border-collapse: collapse; font-size: 13px; background:#fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
-  table.align th, table.align td { text-align: left; padding: 9px 12px; border-bottom: 1px solid #eef2f6; vertical-align: top; }
-  table.align th { background: #f1f5f9; font-size: 12px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
-  .st { font-weight: 800; white-space: nowrap; }
-  .st.ok { color: var(--ok); }
-  .st.warn { color: var(--warn); }
-  .st.bad { color: var(--bad); }
-  code { background:#f1f5f9; padding: 1px 5px; border-radius: 5px; font-size: 12px; color:#0f172a; }
+      /* ---------- alignment table ---------- */
+      table.align {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+      table.align th,
+      table.align td {
+        text-align: left;
+        padding: 9px 12px;
+        border-bottom: 1px solid #eef2f6;
+        vertical-align: top;
+      }
+      table.align th {
+        background: #f1f5f9;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--muted);
+      }
+      .st {
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .st.ok {
+        color: var(--ok);
+      }
+      .st.warn {
+        color: var(--warn);
+      }
+      .st.bad {
+        color: var(--bad);
+      }
+      code {
+        background: #f1f5f9;
+        padding: 1px 5px;
+        border-radius: 5px;
+        font-size: 12px;
+        color: #0f172a;
+      }
 
-  /* ---------- open questions ---------- */
-  .q { background:#fff; border:1px solid var(--line); border-left: 5px solid var(--warn); border-radius: 10px; padding: 12px 16px; margin: 10px 0; }
-  .q.big { border-left-color: var(--bad); }
-  .q .qn { font-weight: 800; font-size: 13px; color: var(--warn); }
-  .q.big .qn { color: var(--bad); }
-  .q p { margin: 4px 0 0; font-size: 13.5px; }
-  .q .ctx { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+      /* ---------- open questions ---------- */
+      .q {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-left: 5px solid var(--warn);
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin: 10px 0;
+      }
+      .q.big {
+        border-left-color: var(--bad);
+      }
+      .q .qn {
+        font-weight: 800;
+        font-size: 13px;
+        color: var(--warn);
+      }
+      .q.big .qn {
+        color: var(--bad);
+      }
+      .q p {
+        margin: 4px 0 0;
+        font-size: 13.5px;
+      }
+      .q .ctx {
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
 
-  .note { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
-  footer { text-align:center; color: var(--muted); font-size: 12px; margin-top: 40px; }
-  .legend-key { display:flex; gap:18px; flex-wrap:wrap; font-size:12.5px; color:var(--muted); margin: 6px 0 0;}
-  .legend-key span b { color: var(--ink); }
-</style>
-</head>
-<body>
-<header>
-  <div class="wrap">
-    <h1>TYAM — โครงสร้างการค้า 3 ชั้น (Trade Flow)</h1>
-    <p>หนูลองโยง flow ที่พี่เล่าให้ฟังออกมาเป็นภาพค่ะ — <b>brand-first b2b2c</b>: ข้อมูลแม่แบบสินค้า (reference) ไหล <b>ลงจากบนลงล่าง</b>, การมองเห็น (visibility) ไหล <b>จากล่างขึ้นบน</b>. ด้านล่างมีตารางเทียบกับ schema ที่ทีมทำไว้แล้ว + คำถามที่จะถามพี่/กวางพรุ่งนี้</p>
-  </div>
-</header>
-
-<div class="wrap">
-
-  <!-- ============ 1. LAYER STACK ============ -->
-  <div class="section-title"><span class="num">1</span> โครงสร้าง 3 ชั้น + Customer</div>
-  <div class="lead">reference ออกจาก Layer 1 เท่านั้น → ส่งต่อลงล่าง. Layer ล่างเห็น Layer บนทีละชั้น (ไม่ข้าม).</div>
-
-  <div class="arrows-legend">
-    <div><span class="pill ref"></span> <b style="color:var(--l1)">reference / สินค้า ไหลลง ↓</b> (Layer 1 เป็นแหล่งเดียว)</div>
-    <div><span class="pill see"></span> <b style="color:var(--l3)">การมองเห็น ↑</b> (ลูกค้าเห็น L3 → L3 เห็น L2 → L2 อาจเห็น/ไม่เห็น L1)</div>
-  </div>
-
-  <div class="stack">
-
-    <!-- Layer 1 -->
-    <div class="layer l1">
-      <div class="layer-head">
-        <span class="badge">LAYER 1</span>
-        <span class="layer-title">Supplier — เจ้าของ brand (ต้นน้ำ)</span>
-        <span class="layer-sub">brand owner / โรงงานที่มี brand / โรงแรม (brand + location)</span>
+      .note {
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-top: 8px;
+      }
+      footer {
+        text-align: center;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 40px;
+      }
+      .legend-key {
+        display: flex;
+        gap: 18px;
+        flex-wrap: wrap;
+        font-size: 12.5px;
+        color: var(--muted);
+        margin: 6px 0 0;
+      }
+      .legend-key span b {
+        color: var(--ink);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <h1>TYAM — โครงสร้างการค้า 3 ชั้น (Trade Flow)</h1>
+        <p>
+          หนูลองโยง flow ที่พี่เล่าให้ฟังออกมาเป็นภาพค่ะ —
+          <b>brand-first b2b2c</b>: ข้อมูลแม่แบบสินค้า (reference) ไหล
+          <b>ลงจากบนลงล่าง</b>, การมองเห็น (visibility) ไหล
+          <b>จากล่างขึ้นบน</b>. ด้านล่างมีตารางเทียบกับ schema ที่ทีมทำไว้แล้ว +
+          คำถามที่จะถามพรุ่งนี้
+        </p>
       </div>
-      <ul class="duties">
-        <li class="can"><b>สร้าง reference / master product</b> — คนเดียวที่ทำได้</li>
-        <li class="can"><b>กำหนด size / variant ที่ขายได้</b> (เช่น กาแฟ 250g / 500g)</li>
-        <li class="can">กำหนด brand, หมวดหมู่, เอกสาร อย./certificate</li>
-        <li class="can">approve Dealer ที่ขอมาขายสินค้าตัวเอง (deal กันเอง)</li>
-        <li class="cant"><b>โรงงานรับจ้างผลิต (OEM) ที่ไม่มี brand → approve ไม่ได้</b> ("หลุด" ออกจากโมเดล)</li>
-        <li>มี dashboard เห็นยอด/ข้อมูลสินค้าตัวเอง</li>
-      </ul>
-    </div>
+    </header>
 
-    <div class="flowarrow">▼ &nbsp; reference + size ที่ "lock" แล้ว ส่งต่อให้ &nbsp; ▼</div>
-
-    <!-- Layer 2 -->
-    <div class="layer l2">
-      <div class="layer-head">
-        <span class="badge">LAYER 2</span>
-        <span class="layer-title">Dealer — ตัวกระจาย / จุดยืดหยุ่น</span>
-        <span class="layer-sub">"ไม่ได้เป็นหน้าร้าน" — เป็นชั้นกลางที่จัดการเบื้องหลัง</span>
+    <div class="wrap">
+      <!-- ============ 1. LAYER STACK ============ -->
+      <div class="section-title">
+        <span class="num">1</span> โครงสร้าง 3 ชั้น + Customer
       </div>
-      <ul class="duties">
-        <li class="can">ดึงสินค้าจาก <b>Layer 1 หลายเจ้า</b> มารวมเป็นคลังของตัวเอง</li>
-        <li class="can">จัดการ <b>ขนส่ง (logistics)</b> + การตลาด + คุยดีล</li>
-        <li class="can"><b>จ้าง influencer + ตั้งค่า commission</b> ให้ influencer</li>
-        <li class="can">ปรับ <b>รูป / การนำเสนอ</b> ให้น่าสนใจ</li>
-        <li class="cant"><b>เปลี่ยน brand ไม่ได้</b></li>
-        <li class="cant"><b>เปลี่ยน / สร้าง size ใหม่ไม่ได้</b> (เลือกได้แค่ว่าจะขาย variant ไหนที่ L1 มี)</li>
-      </ul>
-    </div>
-
-    <div class="flowarrow">▼ &nbsp; ปล่อยให้ Layer 3 เป็นคนขายจริงต่อหน้าลูกค้า &nbsp; ▼</div>
-
-    <!-- Layer 3 -->
-    <div class="layer l3">
-      <div class="layer-head">
-        <span class="badge">LAYER 3</span>
-        <span class="layer-title">Influencer / Shop — หน้าร้านที่ลูกค้าเห็น</span>
-        <span class="layer-sub">storefront จริง</span>
+      <div class="lead">
+        reference ออกจาก Layer 1 เท่านั้น → ส่งต่อลงล่าง. Layer ล่างเห็น Layer
+        บนทีละชั้น (ไม่ข้าม).
       </div>
-      <ul class="duties">
-        <li class="can"><b>ปักตะกร้าได้เลย</b> ไม่ต้อง approve (ถ้า Dealer เปิด is_pinnable)</li>
-        <li class="can">ลงคลิป / นำเสนอสินค้าในวิดีโอ</li>
-        <li class="can">ได้ <b>commission</b> แบบ last-click 7 วัน</li>
-        <li>มี dashboard เห็นยอด/ข้อมูลของตัวเอง</li>
-      </ul>
-    </div>
 
-    <div class="flowarrow">▼ &nbsp; ลูกค้าเห็น &amp; ซื้อ &nbsp; ▼</div>
-
-    <!-- Customer -->
-    <div class="layer cust">
-      <div class="layer-head">
-        <span class="badge">CUSTOMER</span>
-        <span class="layer-title">ผู้ซื้อ</span>
-        <span class="layer-sub">เห็นเฉพาะ Layer 3 (หน้าร้าน)</span>
+      <div class="arrows-legend">
+        <div>
+          <span class="pill ref"></span>
+          <b style="color: var(--l1)">reference / สินค้า ไหลลง ↓</b> (Layer 1
+          เป็นแหล่งเดียว)
+        </div>
+        <div>
+          <span class="pill see"></span>
+          <b style="color: var(--l3)">การมองเห็น ↑</b> (ลูกค้าเห็น L3 → L3 เห็น
+          L2 → L2 อาจเห็น/ไม่เห็น L1)
+        </div>
       </div>
-      <ul class="duties">
-        <li class="can">ดูคลิป → เห็นสินค้าที่ปักตะกร้า → ซื้อได้เลย</li>
-        <li class="can">ลงคลิปได้ถ้าเป็น Creator</li>
-      </ul>
-    </div>
 
-  </div>
+      <div class="stack">
+        <!-- Layer 1 -->
+        <div class="layer l1">
+          <div class="layer-head">
+            <span class="badge">LAYER 1</span>
+            <span class="layer-title">Supplier — เจ้าของ brand (ต้นน้ำ)</span>
+            <span class="layer-sub"
+              >brand owner / โรงงานที่มี brand / โรงแรม (brand + location)</span
+            >
+          </div>
+          <ul class="duties">
+            <li class="can">
+              <b>สร้าง reference / master product</b> — คนเดียวที่ทำได้
+            </li>
+            <li class="can">
+              <b>กำหนด size / variant ที่ขายได้</b> (เช่น กาแฟ 250g / 500g)
+            </li>
+            <li class="can">กำหนด brand, หมวดหมู่, เอกสาร อย./certificate</li>
+            <li class="can">
+              approve Dealer ที่ขอมาขายสินค้าตัวเอง (deal กันเอง)
+            </li>
+            <li class="cant">
+              <b>โรงงานรับจ้างผลิต (OEM) ที่ไม่มี brand → approve ไม่ได้</b>
+              ("หลุด" ออกจากโมเดล)
+            </li>
+            <li>มี dashboard เห็นยอด/ข้อมูลสินค้าตัวเอง</li>
+          </ul>
+        </div>
 
-  <p class="note">⚠️ <b>หมายเหตุที่ต้องถามพี่:</b> ในข้อ "Layer 3 = หน้าร้าน, Layer 2 ไม่ใช่หน้าร้าน" — schema ปัจจุบันมอง <b>Dealer (L2) เป็นผู้ขาย/ผู้รับเงิน/ผู้จัดส่งตามออเดอร์</b> ส่วน Influencer (L3) เป็นแค่คนพาลูกค้ามารับ commission ดูข้อ 4 (คำถาม D1) ด้านล่าง</p>
+        <div class="flowarrow">
+          ▼ &nbsp; reference + size ที่ "lock" แล้ว ส่งต่อให้ &nbsp; ▼
+        </div>
 
+        <!-- Layer 2 -->
+        <div class="layer l2">
+          <div class="layer-head">
+            <span class="badge">LAYER 2</span>
+            <span class="layer-title">Dealer — ตัวกระจาย / จุดยืดหยุ่น</span>
+            <span class="layer-sub"
+              >"ไม่ได้เป็นหน้าร้าน" — เป็นชั้นกลางที่จัดการเบื้องหลัง</span
+            >
+          </div>
+          <ul class="duties">
+            <li class="can">
+              ดึงสินค้าจาก <b>Layer 1 หลายเจ้า</b> มารวมเป็นคลังของตัวเอง
+            </li>
+            <li class="can">
+              จัดการ <b>ขนส่ง (logistics)</b> + การตลาด + คุยดีล
+            </li>
+            <li class="can">
+              <b>จ้าง influencer + ตั้งค่า commission</b> ให้ influencer
+            </li>
+            <li class="can">ปรับ <b>รูป / การนำเสนอ</b> ให้น่าสนใจ</li>
+            <li class="cant"><b>เปลี่ยน brand ไม่ได้</b></li>
+            <li class="cant">
+              <b>เปลี่ยน / สร้าง size ใหม่ไม่ได้</b> (เลือกได้แค่ว่าจะขาย
+              variant ไหนที่ L1 มี)
+            </li>
+          </ul>
+        </div>
 
-  <!-- ============ 2. VISIBILITY CHAIN ============ -->
-  <div class="section-title"><span class="num">2</span> การมองเห็นระหว่างชั้น (Visibility)</div>
-  <div class="cols">
-    <div class="card">
-      <h3>มองทีละชั้น — ไม่ข้าม</h3>
-      <p style="font-size:14px; line-height:2;">
-        👤 <b>Customer</b> &nbsp;→ เห็น&nbsp; <span class="tag" style="background:var(--l3bg);color:var(--l3)">Layer 3</span><br>
-        🛍️ <b>Layer 3</b> &nbsp;→ เห็น&nbsp; <span class="tag" style="background:var(--l2bg);color:var(--l2)">Layer 2</span><br>
-        📦 <b>Layer 2</b> &nbsp;→ <i>อาจเห็น / ไม่เห็น</i>&nbsp; <span class="tag" style="background:var(--l1bg);color:var(--l1)">Layer 1</span><br>
-        <span class="mini">(เพราะ L1↔L2 ส่วนใหญ่ deal กันแบบ offline มากกว่า online)</span>
+        <div class="flowarrow">
+          ▼ &nbsp; ปล่อยให้ Layer 3 เป็นคนขายจริงต่อหน้าลูกค้า &nbsp; ▼
+        </div>
+
+        <!-- Layer 3 -->
+        <div class="layer l3">
+          <div class="layer-head">
+            <span class="badge">LAYER 3</span>
+            <span class="layer-title"
+              >Influencer / Shop — หน้าร้านที่ลูกค้าเห็น</span
+            >
+            <span class="layer-sub">storefront จริง</span>
+          </div>
+          <ul class="duties">
+            <li class="can">
+              <b>ปักตะกร้าได้เลย</b> ไม่ต้อง approve (ถ้า Dealer เปิด
+              is_pinnable)
+            </li>
+            <li class="can">ลงคลิป / นำเสนอสินค้าในวิดีโอ</li>
+            <li class="can">ได้ <b>commission</b> แบบ last-click 7 วัน</li>
+            <li>มี dashboard เห็นยอด/ข้อมูลของตัวเอง</li>
+          </ul>
+        </div>
+
+        <div class="flowarrow">▼ &nbsp; ลูกค้าเห็น &amp; ซื้อ &nbsp; ▼</div>
+
+        <!-- Customer -->
+        <div class="layer cust">
+          <div class="layer-head">
+            <span class="badge">CUSTOMER</span>
+            <span class="layer-title">ผู้ซื้อ</span>
+            <span class="layer-sub">เห็นเฉพาะ Layer 3 (หน้าร้าน)</span>
+          </div>
+          <ul class="duties">
+            <li class="can">ดูคลิป → เห็นสินค้าที่ปักตะกร้า → ซื้อได้เลย</li>
+            <li class="can">ลงคลิปได้ถ้าเป็น Creator</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="note">
+        ⚠️ <b>หมายเหตุที่ต้องถามพี่:</b> ในข้อ "Layer 3 = หน้าร้าน, Layer 2
+        ไม่ใช่หน้าร้าน" — schema ปัจจุบันมอง
+        <b>Dealer (L2) เป็นผู้ขาย/ผู้รับเงิน/ผู้จัดส่งตามออเดอร์</b> ส่วน
+        Influencer (L3) เป็นแค่คนพาลูกค้ามารับ commission ดูข้อ 4 (คำถาม D1)
+        ด้านล่าง
       </p>
+
+      <!-- ============ 2. VISIBILITY CHAIN ============ -->
+      <div class="section-title">
+        <span class="num">2</span> การมองเห็นระหว่างชั้น (Visibility)
+      </div>
+      <div class="cols">
+        <div class="card">
+          <h3>มองทีละชั้น — ไม่ข้าม</h3>
+          <p style="font-size: 14px; line-height: 2">
+            👤 <b>Customer</b> &nbsp;→ เห็น&nbsp;
+            <span class="tag" style="background: var(--l3bg); color: var(--l3)"
+              >Layer 3</span
+            ><br />
+            🛍️ <b>Layer 3</b> &nbsp;→ เห็น&nbsp;
+            <span class="tag" style="background: var(--l2bg); color: var(--l2)"
+              >Layer 2</span
+            ><br />
+            📦 <b>Layer 2</b> &nbsp;→ <i>อาจเห็น / ไม่เห็น</i>&nbsp;
+            <span class="tag" style="background: var(--l1bg); color: var(--l1)"
+              >Layer 1</span
+            ><br />
+            <span class="mini"
+              >(เพราะ L1↔L2 ส่วนใหญ่ deal กันแบบ offline มากกว่า online)</span
+            >
+          </p>
+        </div>
+        <div class="card">
+          <h3>แต่ทุกชั้นมี dashboard ของตัวเอง</h3>
+          <p>
+            L1 / L2 / Influencer ต่างเห็น
+            <b>ข้อมูลสินค้า + ยอดขายของตัวเอง</b> ผ่าน dashboard แยกตาม scope
+          </p>
+          <p class="mini">
+            📌 ใน schema ตอนนี้ visibility <b>ยังไม่ได้ถูก encode ที่ DB</b> —
+            เป็นเรื่อง app-layer (RBAC + query
+            <code>WHERE supplier_id/dealer_id = $1</code>).
+            ต้องถามพี่ว่าต้องการกันถึงระดับ DB ไหม (คำถาม D4)
+          </p>
+        </div>
+      </div>
+
+      <!-- ============ 3. MULTI-ROLE ============ -->
+      <div class="section-title">
+        <span class="num">3</span> ความยืดหยุ่น — 1 entity สวมหลายหมวก
+      </div>
+      <div class="lead">
+        หัวใจของโมเดล: SME รายเดียวอาจเป็นทั้ง L1 + L2 + L3 พร้อมกัน
+      </div>
+      <div class="cols">
+        <div class="card">
+          <h3>กรณีที่พี่ยกตัวอย่าง</h3>
+          <div class="scenario">
+            <b>L2 → ดึง L1 หลายเจ้า:</b> Dealer เอาสินค้าจาก Supplier หลายราย
+            มารวมเป็นร้านตัวเอง แล้วปล่อยให้ "ร้านตัวเอง" ใน L3 ขาย
+          </div>
+          <div class="scenario alt">
+            <b>Shop SME → ผสมเอง:</b> shop ใน L3 ไปหยิบสินค้าจาก L2 หลายๆ ที่
+            มาประกอบขายในร้านตัวเอง
+          </div>
+          <div class="scenario">
+            <b>Brand owner ตัวเล็ก:</b> SME สร้าง brand เอง (L1) + ทำหน้าที่ L2
+            เอง + ขายเอง (L3) เพราะไม่ใช่โรงงานใหญ่
+          </div>
+        </div>
+        <div class="card">
+          <h3>⚠️ จุดที่ต้องคุยกับพี่</h3>
+          <p>
+            schema ปัจจุบัน 1 account = <b>1 role เท่านั้น</b> (<code
+              >users.primary_role IN ('supplier','dealer','customer')</code
+            >) — supplier กับ dealer ควบในบัญชีเดียวยังไม่ได้
+          </p>
+          <p class="mini">
+            (Customer สวม flag <code>is_influencer</code> /
+            <code>is_creator</code> เพิ่มได้ แต่ supplier↔dealer สลับไม่ได้)
+          </p>
+          <p style="font-size: 13px; margin-top: 8px">
+            → ต้องถามว่า "หลายหมวก" = <b>1 login เห็นหลาย portal</b> หรือ
+            <b>1 นิติบุคคลเปิดได้หลาย account</b>? (คำถาม D2)
+          </p>
+        </div>
+      </div>
+
+      <!-- ============ 4. ALIGNMENT WITH SCHEMA ============ -->
+      <div class="section-title">
+        <span class="num">4</span> เทียบกับ schema ที่ทีมทำไว้แล้ว
+      </div>
+      <div class="lead">
+        ✅ = schema รองรับแล้ว &nbsp; | &nbsp; ⚠️ = รองรับบางส่วน / ต้องยืนยัน
+        &nbsp; | &nbsp; ❌ = ขัด หรือ ยังไม่มีใน schema
+      </div>
+      <table class="align">
+        <thead>
+          <tr>
+            <th style="width: 38%">กฎที่พี่สื่อ</th>
+            <th style="width: 10%">สถานะ</th>
+            <th>หลักฐานใน schema</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>reference/master สร้างจาก L1 (Supplier) เท่านั้น</td>
+            <td class="st ok">✅</td>
+            <td>
+              <code>products.supplier_id NOT NULL</code>; Dealer ทำได้แค่
+              <code>dealer_products</code> (FK → products)
+            </td>
+          </tr>
+          <tr>
+            <td>L1 เป็นคนกำหนด size / variant</td>
+            <td class="st ok">✅ ตรงเป๊ะ</td>
+            <td>
+              <code>product_variants</code> เป็นของ Supplier;
+              <code>dealer_product_variants</code> เลือกจาก master เท่านั้น
+              (สร้างใหม่ไม่ได้)
+            </td>
+          </tr>
+          <tr>
+            <td>L2 เปลี่ยน brand ไม่ได้</td>
+            <td class="st ok">✅</td>
+            <td>
+              <code>products.brand_id</code> = lock field;
+              <code>dealer_products</code> ไม่มี brand column
+            </td>
+          </tr>
+          <tr>
+            <td>L2 เปลี่ยน size ไม่ได้</td>
+            <td class="st ok">✅</td>
+            <td>Dealer แก้ได้แค่ราคา/stock/SKU ของ variant ที่ master มี</td>
+          </tr>
+          <tr>
+            <td>L2 จ้าง influencer + ตั้ง commission</td>
+            <td class="st ok">✅</td>
+            <td>
+              <code>dealer_product_commissions.default_rate</code> +
+              <code>influencer_commission_overrides.override_rate</code>
+            </td>
+          </tr>
+          <tr>
+            <td>L2 ดึงสินค้าจาก L1 หลายเจ้ามารวมร้าน</td>
+            <td class="st ok">✅</td>
+            <td>
+              <code>dealer_products UNIQUE(dealer_id, product_id)</code> — 1
+              Dealer ลงได้หลาย product จากหลาย supplier
+            </td>
+          </tr>
+          <tr>
+            <td>L1 ↔ L2 deal กันเอง (Supplier approve Dealer)</td>
+            <td class="st ok">✅</td>
+            <td>
+              <code
+                >dealer_product_applications.approved_by →
+                supplier_staff.id</code
+              >
+              (Supplier approve ไม่ใช่ Admin)
+            </td>
+          </tr>
+          <tr>
+            <td>L3 (Influencer) ปักตะกร้าได้เลย ไม่ต้อง approve</td>
+            <td class="st ok">✅</td>
+            <td>
+              <code>dealer_products.is_pinnable DEFAULT true</code>;
+              <code>is_influencer</code> flag
+            </td>
+          </tr>
+          <tr>
+            <td>L2 "ปรับรูปเท่านั้น"</td>
+            <td class="st warn">⚠️</td>
+            <td>
+              ปรับรูปได้จริง แต่ schema ยังเปิดให้ override <code>name</code>,
+              <code>description</code>, SEO ด้วย — ขัดกับคำว่า "เท่านั้น"
+            </td>
+          </tr>
+          <tr>
+            <td>Multi-role: 1 entity = L1+L2+L3 พร้อมกัน</td>
+            <td class="st bad">❌</td>
+            <td>
+              <code>users.primary_role</code> เลือกได้ role เดียว —
+              supplier+dealer ควบกันไม่ได้
+            </td>
+          </tr>
+          <tr>
+            <td><b>L2 ไม่ใช่หน้าร้าน, L3 คือหน้าร้าน</b></td>
+            <td class="st bad">❌ ขัด</td>
+            <td>
+              <code>order_groups.dealer_id</code> = ผู้ขาย/ผู้จัดส่งตามออเดอร์;
+              Influencer เป็นแค่ attribution บน
+              <code>order_items.influencer_id</code>
+            </td>
+          </tr>
+          <tr>
+            <td>Visibility chain (L2 อาจไม่เห็น L1)</td>
+            <td class="st warn">⚠️ app-layer</td>
+            <td>
+              schema ไม่ได้ encode visibility — ไม่มี RLS / view ซ่อน
+              <code>supplier_id</code>
+            </td>
+          </tr>
+          <tr>
+            <td>Brand gate: ต้องเป็นเจ้าของ brand จริง (กัน OEM)</td>
+            <td class="st warn">⚠️ policy</td>
+            <td>
+              <code>brands</code> ไม่มี owner/supplier_id — เป็น onboarding
+              policy (มี <code>business_verifications</code> รองรับ)
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- ============ 5. OPEN QUESTIONS ============ -->
+      <div class="section-title"><span class="num">5</span> คำถามที่จะถาม</div>
+      <div class="lead">
+        เรียงตามความสำคัญ — 2 ข้อแรกกระทบ schema ใหญ่ ต้อง resolve
+        ก่อนวาด/สร้างจริง
+      </div>
+
+      <div class="q big">
+        <div class="qn">D1 · กระทบ Order schema มากสุด</div>
+        <p>
+          "หน้าร้าน" ที่พี่บอกว่า L3 เป็น แต่ L2 ไม่เป็น — หมายถึง
+          <b>ใครรับเงิน / ออกใบเสร็จ / รับผิดชอบจัดส่ง</b> หรือแค่
+          <b>UI ที่ลูกค้าเห็น</b>?
+        </p>
+        <div class="ctx">
+          ตอนนี้ schema ให้ Dealer (L2) เป็นผู้ขายตามออเดอร์ (<code
+            >order_groups</code
+          >
+          per Dealer), Influencer (L3) เป็นแค่คนพาลูกค้ามารับ commission.
+          ถ้าพี่หมายถึง UI เฉยๆ → schema ยังไหว. ถ้าหมายถึง L3
+          ต้องเป็นผู้ขาย/รับเงินจริง → ต้องรื้อ <code>order_groups</code>.
+        </div>
+      </div>
+
+      <div class="q big">
+        <div class="qn">D2 · กระทบ IAM</div>
+        <p>
+          "1 entity สวมหลายหมวก (L1+L2+L3)" หมายถึง
+          <b>1 login เห็นหลาย portal</b> หรือ
+          <b>1 นิติบุคคลเปิดได้หลาย account</b>?
+        </p>
+        <div class="ctx">
+          ตอนนี้ 1 account = 1 role (supplier / dealer / customer
+          เลือกได้อันเดียว). ถ้าต้องการ 1 login หลาย role → ต้องออกแบบ IAM ใหม่
+          (membership / org-role table แทน single primary_role) — เป็น decision
+          ใหญ่.
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="qn">D3 · ตั้งใจหรือเปล่า</div>
+        <p>
+          Dealer (L2) ควรแก้ <b>ชื่อสินค้า + คำอธิบาย</b> ได้ไหม หรือ lock
+          ให้แก้ได้แค่ <b>รูป + การตลาด</b> เท่านั้น?
+        </p>
+        <div class="ctx">
+          พี่พูดว่า "ปรับรูปเท่านั้น" แต่ schema เปิดให้แก้ <code>name</code> /
+          <code>description</code> / SEO ด้วย. ถ้า lock เพิ่ม = ต้องแก้ schema.
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="qn">D4 · scope การออกแบบ</div>
+        <p>
+          การ "ซ่อน L1 จาก L2" เป็นแค่ <b>ไม่โชว์ใน UI</b> (ทำใน app ได้เลย)
+          หรือต้องการ <b>กันถึงระดับ database</b>?
+        </p>
+        <div class="ctx">
+          social-commerce ส่วนใหญ่ทำ app-layer พอ — ยืนยันเพื่อจะได้ไม่วาด
+          schema-level gate ที่ไม่จำเป็น.
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="qn">D5 · ยืนยันความเข้าใจ</div>
+        <p>
+          size/variant ที่ L1 กำหนด (กาแฟ 250g/500g) — L2
+          <b>เลือกได้</b>ว่าจะขาย variant ไหนบ้าง (ขายแค่ 250g ก็ได้) แต่
+          <b>สร้างไซส์ใหม่ไม่ได้</b> — เข้าใจถูกไหม?
+        </p>
+        <div class="ctx">
+          schema เป็นแบบนี้อยู่: <code>dealer_product_variants</code> เลือกจาก
+          master. ✅
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="qn">D6 · onboarding policy</div>
+        <p>
+          การกัน "ต้องมี brand จริง กัน OEM" — ให้ Admin review ตอน onboard (มี
+          <code>business_verifications</code> แล้ว) พอไหม หรืออยากผูกข้อมูล
+          brand↔supplier ในระบบจริงๆ?
+        </p>
+      </div>
+
+      <footer>
+        TYAM Trade Flow · หนูสรุปจากที่พี่เล่า + เทียบกับ schema ปัจจุบัน
+        (Product / Order / Partnership / IAM) ·
+        ถ้าตรงแล้วเดี๋ยวเอาไปคุยกับกวางต่อได้เลยค่ะ
+      </footer>
     </div>
-    <div class="card">
-      <h3>แต่ทุกชั้นมี dashboard ของตัวเอง</h3>
-      <p>L1 / L2 / Influencer ต่างเห็น <b>ข้อมูลสินค้า + ยอดขายของตัวเอง</b> ผ่าน dashboard แยกตาม scope</p>
-      <p class="mini">📌 ใน schema ตอนนี้ visibility <b>ยังไม่ได้ถูก encode ที่ DB</b> — เป็นเรื่อง app-layer (RBAC + query <code>WHERE supplier_id/dealer_id = $1</code>). ต้องถามพี่ว่าต้องการกันถึงระดับ DB ไหม (คำถาม D4)</p>
-    </div>
-  </div>
-
-
-  <!-- ============ 3. MULTI-ROLE ============ -->
-  <div class="section-title"><span class="num">3</span> ความยืดหยุ่น — 1 entity สวมหลายหมวก</div>
-  <div class="lead">หัวใจของโมเดล: SME รายเดียวอาจเป็นทั้ง L1 + L2 + L3 พร้อมกัน</div>
-  <div class="cols">
-    <div class="card">
-      <h3>กรณีที่พี่ยกตัวอย่าง</h3>
-      <div class="scenario"><b>L2 → ดึง L1 หลายเจ้า:</b> Dealer เอาสินค้าจาก Supplier หลายราย มารวมเป็นร้านตัวเอง แล้วปล่อยให้ "ร้านตัวเอง" ใน L3 ขาย</div>
-      <div class="scenario alt"><b>Shop SME → ผสมเอง:</b> shop ใน L3 ไปหยิบสินค้าจาก L2 หลายๆ ที่ มาประกอบขายในร้านตัวเอง</div>
-      <div class="scenario"><b>Brand owner ตัวเล็ก:</b> SME สร้าง brand เอง (L1) + ทำหน้าที่ L2 เอง + ขายเอง (L3) เพราะไม่ใช่โรงงานใหญ่</div>
-    </div>
-    <div class="card">
-      <h3>⚠️ จุดที่ต้องคุยกับพี่</h3>
-      <p>schema ปัจจุบัน 1 account = <b>1 role เท่านั้น</b> (<code>users.primary_role IN ('supplier','dealer','customer')</code>) — supplier กับ dealer ควบในบัญชีเดียวยังไม่ได้</p>
-      <p class="mini">(Customer สวม flag <code>is_influencer</code> / <code>is_creator</code> เพิ่มได้ แต่ supplier↔dealer สลับไม่ได้)</p>
-      <p style="font-size:13px;margin-top:8px">→ ต้องถามว่า "หลายหมวก" = <b>1 login เห็นหลาย portal</b> หรือ <b>1 นิติบุคคลเปิดได้หลาย account</b>? (คำถาม D2)</p>
-    </div>
-  </div>
-
-
-  <!-- ============ 4. ALIGNMENT WITH SCHEMA ============ -->
-  <div class="section-title"><span class="num">4</span> เทียบกับ schema ที่ทีมทำไว้แล้ว</div>
-  <div class="lead">✅ = schema รองรับแล้ว &nbsp; | &nbsp; ⚠️ = รองรับบางส่วน / ต้องยืนยัน &nbsp; | &nbsp; ❌ = ขัด หรือ ยังไม่มีใน schema</div>
-  <table class="align">
-    <thead>
-      <tr><th style="width:38%">กฎที่พี่สื่อ</th><th style="width:10%">สถานะ</th><th>หลักฐานใน schema</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>reference/master สร้างจาก L1 (Supplier) เท่านั้น</td><td class="st ok">✅</td><td><code>products.supplier_id NOT NULL</code>; Dealer ทำได้แค่ <code>dealer_products</code> (FK → products)</td></tr>
-      <tr><td>L1 เป็นคนกำหนด size / variant</td><td class="st ok">✅ ตรงเป๊ะ</td><td><code>product_variants</code> เป็นของ Supplier; <code>dealer_product_variants</code> เลือกจาก master เท่านั้น (สร้างใหม่ไม่ได้)</td></tr>
-      <tr><td>L2 เปลี่ยน brand ไม่ได้</td><td class="st ok">✅</td><td><code>products.brand_id</code> = lock field; <code>dealer_products</code> ไม่มี brand column</td></tr>
-      <tr><td>L2 เปลี่ยน size ไม่ได้</td><td class="st ok">✅</td><td>Dealer แก้ได้แค่ราคา/stock/SKU ของ variant ที่ master มี</td></tr>
-      <tr><td>L2 จ้าง influencer + ตั้ง commission</td><td class="st ok">✅</td><td><code>dealer_product_commissions.default_rate</code> + <code>influencer_commission_overrides.override_rate</code></td></tr>
-      <tr><td>L2 ดึงสินค้าจาก L1 หลายเจ้ามารวมร้าน</td><td class="st ok">✅</td><td><code>dealer_products UNIQUE(dealer_id, product_id)</code> — 1 Dealer ลงได้หลาย product จากหลาย supplier</td></tr>
-      <tr><td>L1 ↔ L2 deal กันเอง (Supplier approve Dealer)</td><td class="st ok">✅</td><td><code>dealer_product_applications.approved_by → supplier_staff.id</code> (Supplier approve ไม่ใช่ Admin)</td></tr>
-      <tr><td>L3 (Influencer) ปักตะกร้าได้เลย ไม่ต้อง approve</td><td class="st ok">✅</td><td><code>dealer_products.is_pinnable DEFAULT true</code>; <code>is_influencer</code> flag</td></tr>
-      <tr><td>L2 "ปรับรูปเท่านั้น"</td><td class="st warn">⚠️</td><td>ปรับรูปได้จริง แต่ schema ยังเปิดให้ override <code>name</code>, <code>description</code>, SEO ด้วย — ขัดกับคำว่า "เท่านั้น"</td></tr>
-      <tr><td>Multi-role: 1 entity = L1+L2+L3 พร้อมกัน</td><td class="st bad">❌</td><td><code>users.primary_role</code> เลือกได้ role เดียว — supplier+dealer ควบกันไม่ได้</td></tr>
-      <tr><td><b>L2 ไม่ใช่หน้าร้าน, L3 คือหน้าร้าน</b></td><td class="st bad">❌ ขัด</td><td><code>order_groups.dealer_id</code> = ผู้ขาย/ผู้จัดส่งตามออเดอร์; Influencer เป็นแค่ attribution บน <code>order_items.influencer_id</code></td></tr>
-      <tr><td>Visibility chain (L2 อาจไม่เห็น L1)</td><td class="st warn">⚠️ app-layer</td><td>schema ไม่ได้ encode visibility — ไม่มี RLS / view ซ่อน <code>supplier_id</code></td></tr>
-      <tr><td>Brand gate: ต้องเป็นเจ้าของ brand จริง (กัน OEM)</td><td class="st warn">⚠️ policy</td><td><code>brands</code> ไม่มี owner/supplier_id — เป็น onboarding policy (มี <code>business_verifications</code> รองรับ)</td></tr>
-    </tbody>
-  </table>
-
-
-  <!-- ============ 5. OPEN QUESTIONS ============ -->
-  <div class="section-title"><span class="num">5</span> คำถามที่จะถามพี่ / กวาง พรุ่งนี้</div>
-  <div class="lead">เรียงตามความสำคัญ — 2 ข้อแรกกระทบ schema ใหญ่ ต้อง resolve ก่อนวาด/สร้างจริง</div>
-
-  <div class="q big">
-    <div class="qn">D1 · กระทบ Order schema มากสุด</div>
-    <p>"หน้าร้าน" ที่พี่บอกว่า L3 เป็น แต่ L2 ไม่เป็น — หมายถึง <b>ใครรับเงิน / ออกใบเสร็จ / รับผิดชอบจัดส่ง</b> หรือแค่ <b>UI ที่ลูกค้าเห็น</b>?</p>
-    <div class="ctx">ตอนนี้ schema ให้ Dealer (L2) เป็นผู้ขายตามออเดอร์ (<code>order_groups</code> per Dealer), Influencer (L3) เป็นแค่คนพาลูกค้ามารับ commission. ถ้าพี่หมายถึง UI เฉยๆ → schema ยังไหว. ถ้าหมายถึง L3 ต้องเป็นผู้ขาย/รับเงินจริง → ต้องรื้อ <code>order_groups</code>.</div>
-  </div>
-
-  <div class="q big">
-    <div class="qn">D2 · กระทบ IAM</div>
-    <p>"1 entity สวมหลายหมวก (L1+L2+L3)" หมายถึง <b>1 login เห็นหลาย portal</b> หรือ <b>1 นิติบุคคลเปิดได้หลาย account</b>?</p>
-    <div class="ctx">ตอนนี้ 1 account = 1 role (supplier / dealer / customer เลือกได้อันเดียว). ถ้าต้องการ 1 login หลาย role → ต้องออกแบบ IAM ใหม่ (membership / org-role table แทน single primary_role) — เป็น decision ใหญ่ ควรชงกวางด้วย.</div>
-  </div>
-
-  <div class="q">
-    <div class="qn">D3 · ตั้งใจหรือเปล่า</div>
-    <p>Dealer (L2) ควรแก้ <b>ชื่อสินค้า + คำอธิบาย</b> ได้ไหม หรือ lock ให้แก้ได้แค่ <b>รูป + การตลาด</b> เท่านั้น?</p>
-    <div class="ctx">พี่พูดว่า "ปรับรูปเท่านั้น" แต่ schema เปิดให้แก้ <code>name</code> / <code>description</code> / SEO ด้วย. ถ้า lock เพิ่ม = ต้องแก้ schema.</div>
-  </div>
-
-  <div class="q">
-    <div class="qn">D4 · scope การออกแบบ</div>
-    <p>การ "ซ่อน L1 จาก L2" เป็นแค่ <b>ไม่โชว์ใน UI</b> (ทำใน app ได้เลย) หรือต้องการ <b>กันถึงระดับ database</b>?</p>
-    <div class="ctx">social-commerce ส่วนใหญ่ทำ app-layer พอ — ยืนยันเพื่อจะได้ไม่วาด schema-level gate ที่ไม่จำเป็น.</div>
-  </div>
-
-  <div class="q">
-    <div class="qn">D5 · ยืนยันความเข้าใจ</div>
-    <p>size/variant ที่ L1 กำหนด (กาแฟ 250g/500g) — L2 <b>เลือกได้</b>ว่าจะขาย variant ไหนบ้าง (ขายแค่ 250g ก็ได้) แต่ <b>สร้างไซส์ใหม่ไม่ได้</b> — เข้าใจถูกไหม?</p>
-    <div class="ctx">schema เป็นแบบนี้อยู่: <code>dealer_product_variants</code> เลือกจาก master. ✅</div>
-  </div>
-
-  <div class="q">
-    <div class="qn">D6 · onboarding policy</div>
-    <p>การกัน "ต้องมี brand จริง กัน OEM" — ให้ Admin review ตอน onboard (มี <code>business_verifications</code> แล้ว) พอไหม หรืออยากผูกข้อมูล brand↔supplier ในระบบจริงๆ?</p>
-  </div>
-
-
-  <footer>
-    TYAM Trade Flow · หนูสรุปจากที่พี่เล่า + เทียบกับ schema ปัจจุบัน (Product / Order / Partnership / IAM) · ถ้าตรงแล้วเดี๋ยวเอาไปคุยกับกวางต่อได้เลยค่ะ
-  </footer>
-
-</div>
-</body>
+  </body>
 </html>
